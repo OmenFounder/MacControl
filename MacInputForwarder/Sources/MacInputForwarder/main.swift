@@ -1,47 +1,64 @@
 import Foundation
 import AppKit
+import Darwin
+
+signal(SIGPIPE, SIG_IGN) // Prevent crashing on broken pipe
 
 class ScreenStreamer {
     let port: UInt16 = 5051
-    var clientHandle: FileHandle?
 
     func start() {
-        let listener = try! SocketListener(port: port)
-        print("📡 Screen streamer listening on port \(port)")
-
         DispatchQueue.global(qos: .userInteractive).async {
-            self.clientHandle = listener.accept()
-            print("✅ Screen client connected")
-            self.streamLoop()
+            while true {
+                do {
+                    let listener = try SocketListener(port: self.port)
+                    print("📡 Screen streamer listening on port \(self.port)")
+
+                    while true {
+                        let client = listener.accept()
+                        print("✅ Screen client connected")
+                        self.streamLoop(handle: client)
+                    }
+                } catch {
+                    print("❌ Error in screen streamer: \(error)")
+                    sleep(1)
+                }
+            }
         }
     }
 
-    private func streamLoop() {
-        let timer = Timer(timeInterval: 1.0 / 30.0, repeats: true) { _ in
+    private func streamLoop(handle: FileHandle) {
+        let timer = DispatchSource.makeTimerSource(queue: .global(qos: .userInteractive))
+        timer.schedule(deadline: .now(), repeating: .milliseconds(33), leeway: .milliseconds(1))
+
+        timer.setEventHandler {
             guard let imageRef = CGWindowListCreateImage(.infinite, .optionAll, kCGNullWindowID, .bestResolution) else {
-                print("❌ Still failing to capture screen image!")
+                print("❌ Failed to capture screen image!")
                 return
             }
 
             let bitmapRep = NSBitmapImageRep(cgImage: imageRef)
             guard let jpegData = bitmapRep.representation(using: .jpeg, properties: [.compressionFactor: 0.6]) else {
-                print("❌ Failed to create JPEG from screen")
+                print("❌ Failed to encode JPEG")
                 return
             }
 
             var length = UInt32(jpegData.count).bigEndian
             let header = Data(bytes: &length, count: 4)
 
-            if let client = self.clientHandle {
-                do {
-                    try client.write(contentsOf: header + jpegData)
-                } catch {
-                    print("❌ Failed to send frame: \(error)")
-                }
+            do {
+                try handle.write(contentsOf: header + jpegData)
+            } catch {
+                print("⚠️ Client stream disconnected: \(error)")
+                timer.cancel()
             }
         }
 
-        RunLoop.current.add(timer, forMode: .common)
+        timer.setCancelHandler {
+            print("🔁 Stream timer cancelled")
+        }
+
+        timer.resume()
         RunLoop.current.run()
     }
 }
@@ -50,74 +67,92 @@ class InputReceiver {
     let port: UInt16 = 5050
 
     func start() {
-        let listener = try! SocketListener(port: port)
-        print("🎮 Input listener on port \(port)")
-
         DispatchQueue.global(qos: .userInteractive).async {
-            let handle = listener.accept()
-            print("✅ Input client connected")
-            self.listenLoop(socket: handle)
-        }
-    }
+            while true {
+                do {
+                    let listener = try SocketListener(port: self.port)
+                    print("🎮 Input listener on port \(self.port)")
 
-    private var lastMousePosition: CGPoint = .zero
-
-    private func listenLoop(socket: FileHandle) {
-        var buffer = Data()
-
-        while true {
-            guard let chunk = try? socket.read(upToCount: 1024), !chunk.isEmpty else {
-                break
-            }
-
-            buffer.append(chunk)
-
-            while let newline = buffer.firstIndex(of: 0x0A) {
-                let jsonData = buffer[..<newline]
-                buffer = buffer[(newline + 1)...]
-
-                if let dict = try? JSONSerialization.jsonObject(with: jsonData) as? [String: Any] {
-                    self.handleInput(dict)
+                    while true {
+                        let handle = listener.accept()
+                        print("✅ Input client connected")
+                        self.listenLoop(socket: handle)
+                    }
+                } catch {
+                    print("❌ Error in input receiver: \(error)")
+                    sleep(1)
                 }
             }
         }
     }
 
+    private func listenLoop(socket: FileHandle) {
+        var buffer = Data()
+
+        while true {
+            do {
+                guard let chunk = try socket.read(upToCount: 1024), !chunk.isEmpty else {
+                    print("⚠️ Input socket closed.")
+                    break
+                }
+
+                buffer.append(chunk)
+
+                while let newline = buffer.firstIndex(of: 0x0A) {
+                    let jsonData = buffer[..<newline]
+                    buffer = buffer[(newline + 1)...]
+
+                    if let jsonArray = try? JSONSerialization.jsonObject(with: jsonData) as? [[String: Any]] {
+                        for dict in jsonArray {
+                            self.handleInput(dict)
+                        }
+                    } else if let dict = try? JSONSerialization.jsonObject(with: jsonData) as? [String: Any] {
+                        self.handleInput(dict)
+                    } else {
+                        print("⚠️ Invalid JSON")
+                    }
+                }
+            } catch {
+                print("❌ Read error: \(error)")
+                break
+            }
+        }
+    }
 
     private func handleInput(_ dict: [String: Any]) {
-        guard let x = dict["x"] as? CGFloat, let y = dict["y"] as? CGFloat else { return }
+        let x = dict["x"] as? CGFloat ?? 0
+        let y = dict["y"] as? CGFloat ?? 0
         let pt = CGPoint(x: x, y: y)
-        lastMousePosition = pt
 
         switch dict["type"] as? String {
         case "mouseMove":
             let isDragging = CGEventSource.buttonState(.combinedSessionState, button: .left)
             let type: CGEventType = isDragging ? .leftMouseDragged : .mouseMoved
             CGEvent(mouseEventSource: nil, mouseType: type, mouseCursorPosition: pt, mouseButton: .left)?.post(tap: .cghidEventTap)
-            print(isDragging ? "🚚 Drag to \(pt)" : "🖱️ Move to \(pt)")
 
         case "mouseDrag":
             CGEvent(mouseEventSource: nil, mouseType: .leftMouseDragged, mouseCursorPosition: pt, mouseButton: .left)?.post(tap: .cghidEventTap)
-            print("🚛 Explicit drag to \(pt)")
 
         case "mouseDown":
             CGEvent(mouseEventSource: nil, mouseType: .leftMouseDown, mouseCursorPosition: pt, mouseButton: .left)?.post(tap: .cghidEventTap)
-            print("🖱️ Mouse down at \(pt)")
 
         case "mouseUp":
             CGEvent(mouseEventSource: nil, mouseType: .leftMouseUp, mouseCursorPosition: pt, mouseButton: .left)?.post(tap: .cghidEventTap)
-            print("🖱️ Mouse up at \(pt)")
+
+        case "mouseRightDown":
+            CGEvent(mouseEventSource: nil, mouseType: .rightMouseDown, mouseCursorPosition: pt, mouseButton: .right)?.post(tap: .cghidEventTap)
+
+        case "mouseRightUp":
+            CGEvent(mouseEventSource: nil, mouseType: .rightMouseUp, mouseCursorPosition: pt, mouseButton: .right)?.post(tap: .cghidEventTap)
 
         case "keyDown":
             if let keyCode = dict["keyCode"] as? UInt16 {
                 CGEvent(keyboardEventSource: nil, virtualKey: keyCode, keyDown: true)?.post(tap: .cghidEventTap)
-                print("⌨️ Key down: \(keyCode)")
             }
 
         case "keyUp":
             if let keyCode = dict["keyCode"] as? UInt16 {
                 CGEvent(keyboardEventSource: nil, virtualKey: keyCode, keyDown: false)?.post(tap: .cghidEventTap)
-                print("⌨️ Key up: \(keyCode)")
             }
 
         default:
@@ -126,14 +161,15 @@ class InputReceiver {
     }
 }
 
-// MARK: - Socket Listener
-
 class SocketListener {
     let fileHandle: FileHandle
 
     init(port: UInt16) throws {
         let socketFD = socket(AF_INET, SOCK_STREAM, 0)
         guard socketFD >= 0 else { throw NSError(domain: "SocketCreateError", code: 1) }
+
+        var flag = 1
+        setsockopt(socketFD, IPPROTO_TCP, TCP_NODELAY, &flag, socklen_t(MemoryLayout.size(ofValue: flag)))
 
         var addr = sockaddr_in(
             sin_len: UInt8(MemoryLayout<sockaddr_in>.stride),
@@ -167,4 +203,7 @@ let streamer = ScreenStreamer()
 let input = InputReceiver()
 streamer.start()
 input.start()
-RunLoop.main.run()
+
+let group = DispatchGroup()
+group.enter() // Block forever
+group.wait()
