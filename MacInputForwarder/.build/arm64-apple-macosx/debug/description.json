@@ -1,0 +1,140 @@
+{
+  "builtTestProducts" : [
+
+  ],
+  "copyCommands" : {
+
+  },
+  "explicitTargetDependencyImportCheckingMode" : {
+    "none" : {
+
+    }
+  },
+  "generatedSourceTargetSet" : [
+
+  ],
+  "pluginDescriptions" : [
+
+  ],
+  "swiftCommands" : {
+    "C.MacInputForwarder-debug.module" : {
+      "executable" : "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swiftc",
+      "importPath" : "/Users/jonathanday/Projects/MacControl/MacInputForwarder/.build/arm64-apple-macosx/debug",
+      "inputs" : [
+        {
+          "kind" : "file",
+          "name" : "/Users/jonathanday/Projects/MacControl/MacInputForwarder/Sources/MacInputForwarder/main.swift"
+        }
+      ],
+      "isLibrary" : false,
+      "moduleName" : "MacInputForwarder",
+      "moduleOutputPath" : "/Users/jonathanday/Projects/MacControl/MacInputForwarder/.build/arm64-apple-macosx/debug/MacInputForwarder.swiftmodule",
+      "objects" : [
+        "/Users/jonathanday/Projects/MacControl/MacInputForwarder/.build/arm64-apple-macosx/debug/MacInputForwarder.build/main.swift.o"
+      ],
+      "otherArguments" : [
+        "-target",
+        "arm64-apple-macosx11.0",
+        "-swift-version",
+        "5",
+        "-enable-batch-mode",
+        "-index-store-path",
+        "/Users/jonathanday/Projects/MacControl/MacInputForwarder/.build/arm64-apple-macosx/debug/index/store",
+        "-Onone",
+        "-enable-testing",
+        "-g",
+        "-j8",
+        "-DSWIFT_PACKAGE",
+        "-DDEBUG",
+        "-module-cache-path",
+        "/Users/jonathanday/Projects/MacControl/MacInputForwarder/.build/arm64-apple-macosx/debug/ModuleCache",
+        "-parseable-output",
+        "-Xfrontend",
+        "-entry-point-function-name",
+        "-Xfrontend",
+        "MacInputForwarder_main",
+        "-color-diagnostics",
+        "-sdk",
+        "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX13.3.sdk",
+        "-F",
+        "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/Library/Frameworks",
+        "-I",
+        "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/usr/lib",
+        "-L",
+        "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/usr/lib"
+      ],
+      "outputs" : [
+        {
+          "kind" : "file",
+          "name" : "/Users/jonathanday/Projects/MacControl/MacInputForwarder/.build/arm64-apple-macosx/debug/MacInputForwarder.build/main.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/jonathanday/Projects/MacControl/MacInputForwarder/.build/arm64-apple-macosx/debug/MacInputForwarder.swiftmodule"
+        }
+      ],
+      "sources" : [
+        "/Users/jonathanday/Projects/MacControl/MacInputForwarder/Sources/MacInputForwarder/main.swift"
+      ],
+      "tempsPath" : "/Users/jonathanday/Projects/MacControl/MacInputForwarder/.build/arm64-apple-macosx/debug/MacInputForwarder.build",
+      "wholeModuleOptimization" : false
+    }
+  },
+  "swiftFrontendCommands" : {
+
+  },
+  "swiftTargetScanArgs" : {
+    "MacInputForwarder" : [
+      "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swiftc",
+      "-module-name",
+      "MacInputForwarder",
+      "-incremental",
+      "-c",
+      "/Users/jonathanday/Projects/MacControl/MacInputForwarder/Sources/MacInputForwarder/main.swift",
+      "-I",
+      "/Users/jonathanday/Projects/MacControl/MacInputForwarder/.build/arm64-apple-macosx/debug",
+      "-target",
+      "arm64-apple-macosx11.0",
+      "-swift-version",
+      "5",
+      "-enable-batch-mode",
+      "-index-store-path",
+      "/Users/jonathanday/Projects/MacControl/MacInputForwarder/.build/arm64-apple-macosx/debug/index/store",
+      "-Onone",
+      "-enable-testing",
+      "-g",
+      "-j8",
+      "-DSWIFT_PACKAGE",
+      "-DDEBUG",
+      "-module-cache-path",
+      "/Users/jonathanday/Projects/MacControl/MacInputForwarder/.build/arm64-apple-macosx/debug/ModuleCache",
+      "-parseable-output",
+      "-Xfrontend",
+      "-entry-point-function-name",
+      "-Xfrontend",
+      "MacInputForwarder_main",
+      "-color-diagnostics",
+      "-sdk",
+      "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX13.3.sdk",
+      "-F",
+      "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/Library/Frameworks",
+      "-I",
+      "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/usr/lib",
+      "-L",
+      "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/usr/lib",
+      "-driver-use-frontend-path",
+      "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swiftc"
+    ]
+  },
+  "targetDependencyMap" : {
+    "MacInputForwarder" : [
+
+    ]
+  },
+  "testDiscoveryCommands" : {
+
+  },
+  "testEntryPointCommands" : {
+
+  }
+}
