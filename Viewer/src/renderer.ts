@@ -26,11 +26,9 @@ window.MacBridge.onStreamData((chunk: Uint8Array) => {
     const blob = new Blob([frameData], { type: "image/jpeg" });
 
     createImageBitmap(blob).then((bitmap) => {
-      // ✅ Always update currentImageWidth/Height
       currentImageWidth = bitmap.width;
       currentImageHeight = bitmap.height;
 
-      // Lock aspect ratio once
       window.electron.ipcRenderer.send("set-aspect", {
         width: bitmap.width,
         height: bitmap.height,
@@ -55,9 +53,8 @@ function getScaledMouseCoords(e: MouseEvent) {
   return { x, y };
 }
 
-let isDragging = false;
 let lastSentTime = 0;
-const minInterval = 1000 / 60; // 60fps
+const minInterval = 1000 / 60; // 60fps throttle
 
 canvas.addEventListener("mousemove", (e) => {
   const now = performance.now();
@@ -65,38 +62,45 @@ canvas.addEventListener("mousemove", (e) => {
   lastSentTime = now;
 
   const { x, y } = getScaledMouseCoords(e);
-  window.MacBridge.sendInput({ type: "mouseMove", x, y });
+  window.MacBridge.sendInput([{ type: "mouseMove", x, y }]);
 });
 
 canvas.addEventListener("contextmenu", (e) => {
-  e.preventDefault(); // Prevent native context menu
+  e.preventDefault(); // Disable default right-click menu
 });
 
 canvas.addEventListener("mousedown", (e) => {
   const { x, y } = getScaledMouseCoords(e);
-  console.log("Sending Input:", { type: "mouseDown", x: x, y: y });
+
+  const events = [{ type: "mouseMove", x, y }];
   if (e.button === 2) {
-    window.MacBridge.sendInput({ type: "mouseRightDown", x, y });
+    events.push({ type: "mouseRightDown", x, y });
   } else {
-    window.MacBridge.sendInput({ type: "mouseDown", x, y });
+    events.push({ type: "mouseDown", x, y });
   }
+
+  window.MacBridge.sendInput(events);
 });
 
 canvas.addEventListener("mouseup", (e) => {
   const { x, y } = getScaledMouseCoords(e);
+
+  const events = [{ type: "mouseMove", x, y }];
   if (e.button === 2) {
-    window.MacBridge.sendInput({ type: "mouseRightUp", x, y });
+    events.push({ type: "mouseRightUp", x, y });
   } else {
-    window.MacBridge.sendInput({ type: "mouseUp", x, y });
+    events.push({ type: "mouseUp", x, y });
   }
+
+  window.MacBridge.sendInput(events);
 });
 
 window.addEventListener("keydown", (e) => {
-  window.MacBridge.sendInput({ type: "keyDown", keyCode: e.keyCode });
+  window.MacBridge.sendInput([{ type: "keyDown", keyCode: e.keyCode }]);
 });
 
 window.addEventListener("keyup", (e) => {
-  window.MacBridge.sendInput({ type: "keyUp", keyCode: e.keyCode });
+  window.MacBridge.sendInput([{ type: "keyUp", keyCode: e.keyCode }]);
 });
 
 window.addEventListener("resize", () => {
