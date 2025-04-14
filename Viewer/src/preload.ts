@@ -1,4 +1,4 @@
-import { contextBridge } from "electron";
+import { contextBridge, ipcRenderer  } from "electron";
 import * as net from "net";
 import { Buffer } from "buffer";
 
@@ -17,6 +17,9 @@ function setupSockets() {
     inputSocket.connect(5050, "10.0.0.2");
     inputSocket.on("error", console.error);
   }
+
+  screenSocket.setNoDelay(true);
+  inputSocket.setNoDelay(true);
 }
 
 contextBridge.exposeInMainWorld("MacBridge", {
@@ -35,4 +38,8 @@ contextBridge.exposeInMainWorld("MacBridge", {
   bufferAlloc: (size: number) => Buffer.alloc(size),
   bufferConcat: (chunks: Uint8Array[]) => Buffer.concat(chunks),
   readUInt32BE: (buf: Uint8Array, offset: number) => Buffer.from(buf).readUInt32BE(offset),
+});
+
+contextBridge.exposeInMainWorld('electron', {
+  ipcRenderer
 });

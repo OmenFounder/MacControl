@@ -9,5 +9,10 @@ declare global {
       bufferConcat(chunks: Uint8Array[]): Uint8Array;
       readUInt32BE(buf: Uint8Array, offset: number): number;
     };
+    electron: {
+      ipcRenderer: {
+        send: (channel: string, data: any) => void;
+      };
+    };
   }
 }

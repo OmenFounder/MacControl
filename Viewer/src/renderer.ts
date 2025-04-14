@@ -1,22 +1,17 @@
 const canvas = document.getElementById("screen") as HTMLCanvasElement;
 const ctx = canvas.getContext("2d");
 
-if (!ctx) {
-  throw new Error("Could not get canvas context");
-}
+if (!ctx) throw new Error("Could not get canvas context");
 
 let buffer = window.MacBridge.bufferAlloc(0);
-let aspectSet = false;
+let currentImageWidth = 0;
+let currentImageHeight = 0;
 
-function resizeCanvasToWindow() {
-  canvas.width = window.innerWidth * window.devicePixelRatio;
-  canvas.height = window.innerHeight * window.devicePixelRatio;
-  canvas.style.width = window.innerWidth + "px";
-  canvas.style.height = window.innerHeight + "px";
+function resizeCanvasToMatchWindow() {
+  const pixelRatio = window.devicePixelRatio;
+  canvas.width = Math.floor(canvas.clientWidth * pixelRatio);
+  canvas.height = Math.floor(canvas.clientHeight * pixelRatio);
 }
-
-resizeCanvasToWindow();
-window.addEventListener("resize", resizeCanvasToWindow);
 
 window.MacBridge.onStreamData((chunk: Uint8Array) => {
   buffer = window.MacBridge.bufferConcat([buffer, chunk]);
@@ -29,46 +24,71 @@ window.MacBridge.onStreamData((chunk: Uint8Array) => {
     buffer = buffer.slice(4 + frameSize);
 
     const blob = new Blob([frameData], { type: "image/jpeg" });
+
     createImageBitmap(blob).then((bitmap) => {
-      // Lock aspect ratio ONCE
-      if (!aspectSet) {
-        window.electron.ipcRenderer.send("set-aspect", {
-          width: bitmap.width,
-          height: bitmap.height,
-        });
-        aspectSet = true;
-      }
+      // ✅ Always update currentImageWidth/Height
+      currentImageWidth = bitmap.width;
+      currentImageHeight = bitmap.height;
 
-      const canvasRatio = canvas.width / canvas.height;
-      const imageRatio = bitmap.width / bitmap.height;
+      // Lock aspect ratio once
+      window.electron.ipcRenderer.send("set-aspect", {
+        width: bitmap.width,
+        height: bitmap.height,
+      });
 
-      let sx = 0, sy = 0, sWidth = bitmap.width, sHeight = bitmap.height;
-
-      // Crop to match aspect
-      if (imageRatio > canvasRatio) {
-        sWidth = bitmap.height * canvasRatio;
-        sx = (bitmap.width - sWidth) / 2;
-      } else {
-        sHeight = bitmap.width / canvasRatio;
-        sy = (bitmap.height - sHeight) / 2;
-      }
+      resizeCanvasToMatchWindow();
 
       ctx.clearRect(0, 0, canvas.width, canvas.height);
-      ctx.drawImage(bitmap, sx, sy, sWidth, sHeight, 0, 0, canvas.width, canvas.height);
+      ctx.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
     }).catch(console.error);
   }
 });
 
+function getScaledMouseCoords(e: MouseEvent) {
+  const rect = canvas.getBoundingClientRect();
+  const scaleX = currentImageWidth / rect.width;
+  const scaleY = currentImageHeight / rect.height;
+
+  const x = (e.clientX - rect.left) * scaleX;
+  const y = (e.clientY - rect.top) * scaleY;
+
+  return { x, y };
+}
+
+let isDragging = false;
+let lastSentTime = 0;
+const minInterval = 1000 / 60; // 60fps
+
 canvas.addEventListener("mousemove", (e) => {
-  window.MacBridge.sendInput({ type: "mouseMove", x: e.clientX, y: e.clientY });
+  const now = performance.now();
+  if (now - lastSentTime < minInterval) return;
+  lastSentTime = now;
+
+  const { x, y } = getScaledMouseCoords(e);
+  window.MacBridge.sendInput({ type: "mouseMove", x, y });
 });
 
-canvas.addEventListener("mousedown", () => {
-  window.MacBridge.sendInput({ type: "mouseDown" });
+canvas.addEventListener("contextmenu", (e) => {
+  e.preventDefault(); // Prevent native context menu
 });
 
-canvas.addEventListener("mouseup", () => {
-  window.MacBridge.sendInput({ type: "mouseUp" });
+canvas.addEventListener("mousedown", (e) => {
+  const { x, y } = getScaledMouseCoords(e);
+  console.log("Sending Input:", { type: "mouseDown", x: x, y: y });
+  if (e.button === 2) {
+    window.MacBridge.sendInput({ type: "mouseRightDown", x, y });
+  } else {
+    window.MacBridge.sendInput({ type: "mouseDown", x, y });
+  }
+});
+
+canvas.addEventListener("mouseup", (e) => {
+  const { x, y } = getScaledMouseCoords(e);
+  if (e.button === 2) {
+    window.MacBridge.sendInput({ type: "mouseRightUp", x, y });
+  } else {
+    window.MacBridge.sendInput({ type: "mouseUp", x, y });
+  }
 });
 
 window.addEventListener("keydown", (e) => {
@@ -77,4 +97,8 @@ window.addEventListener("keydown", (e) => {
 
 window.addEventListener("keyup", (e) => {
   window.MacBridge.sendInput({ type: "keyUp", keyCode: e.keyCode });
+});
+
+window.addEventListener("resize", () => {
+  resizeCanvasToMatchWindow();
 });
