@@ -1,0 +1,14 @@
+{
+  "name": "maccontrol",
+  "version": "1.0.0",
+  "main": "dist/main.js",
+  "scripts": {
+    "build": "tsc -p tsconfig.main.json && tsc -p tsconfig.preload.json && tsc -p tsconfig.renderer.json && copyfiles -u 1 src/index.html dist",
+    "start": "electron ."
+  },
+  "devDependencies": {
+    "copyfiles": "^2.4.1",
+    "electron": "^27.1.2",
+    "typescript": "^5.4.5"
+  }
+}
