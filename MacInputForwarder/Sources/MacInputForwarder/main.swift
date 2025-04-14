@@ -23,9 +23,6 @@ class ScreenStreamer {
                 return
             }
 
-            //print("📷 Captured frame size: \(imageRef.width)x\(imageRef.height)")
-
-
             let bitmapRep = NSBitmapImageRep(cgImage: imageRef)
             guard let jpegData = bitmapRep.representation(using: .jpeg, properties: [.compressionFactor: 0.6]) else {
                 print("❌ Failed to create JPEG from screen")
@@ -56,18 +53,23 @@ class InputReceiver {
         let listener = try! SocketListener(port: port)
         print("🎮 Input listener on port \(port)")
 
-        DispatchQueue.global(qos: .userInitiated).async {
+        DispatchQueue.global(qos: .userInteractive).async {
             let handle = listener.accept()
             print("✅ Input client connected")
             self.listenLoop(socket: handle)
         }
     }
 
+    private var lastMousePosition: CGPoint = .zero
+
     private func listenLoop(socket: FileHandle) {
         var buffer = Data()
 
         while true {
-            guard let chunk = try? socket.read(upToCount: 1024), !chunk.isEmpty else { break }
+            guard let chunk = try? socket.read(upToCount: 1024), !chunk.isEmpty else {
+                break
+            }
+
             buffer.append(chunk)
 
             while let newline = buffer.firstIndex(of: 0x0A) {
@@ -75,14 +77,12 @@ class InputReceiver {
                 buffer = buffer[(newline + 1)...]
 
                 if let dict = try? JSONSerialization.jsonObject(with: jsonData) as? [String: Any] {
-                    print("📨 Received input: \(dict)")
                     self.handleInput(dict)
                 }
             }
         }
     }
 
-    private var lastMousePosition: CGPoint = .zero
 
     private func handleInput(_ dict: [String: Any]) {
         guard let x = dict["x"] as? CGFloat, let y = dict["y"] as? CGFloat else { return }
@@ -97,7 +97,6 @@ class InputReceiver {
             print(isDragging ? "🚚 Drag to \(pt)" : "🖱️ Move to \(pt)")
 
         case "mouseDrag":
-            // Explicit drag command from the client — always post as .leftMouseDragged
             CGEvent(mouseEventSource: nil, mouseType: .leftMouseDragged, mouseCursorPosition: pt, mouseButton: .left)?.post(tap: .cghidEventTap)
             print("🚛 Explicit drag to \(pt)")
 
@@ -125,7 +124,6 @@ class InputReceiver {
             print("⚠️ Unknown input: \(dict)")
         }
     }
-
 }
 
 // MARK: - Socket Listener
