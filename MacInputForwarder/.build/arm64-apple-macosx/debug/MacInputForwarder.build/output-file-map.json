@@ -1,0 +1,11 @@
+{
+  "": {
+    "swift-dependencies": "/Users/jonathanday/Projects/MacControl/MacInputForwarder/.build/arm64-apple-macosx/debug/MacInputForwarder.build/master.swiftdeps"
+  },
+  "/Users/jonathanday/Projects/MacControl/MacInputForwarder/Sources/MacInputForwarder/main.swift": {
+    "dependencies": "/Users/jonathanday/Projects/MacControl/MacInputForwarder/.build/arm64-apple-macosx/debug/MacInputForwarder.build/main.d",
+    "object": "/Users/jonathanday/Projects/MacControl/MacInputForwarder/.build/arm64-apple-macosx/debug/MacInputForwarder.build/main.swift.o",
+    "swiftmodule": "/Users/jonathanday/Projects/MacControl/MacInputForwarder/.build/arm64-apple-macosx/debug/MacInputForwarder.build/main~partial.swiftmodule",
+    "swift-dependencies": "/Users/jonathanday/Projects/MacControl/MacInputForwarder/.build/arm64-apple-macosx/debug/MacInputForwarder.build/main.swiftdeps"
+  }
+}
