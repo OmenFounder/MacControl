@@ -1,6 +1,7 @@
 import { contextBridge, ipcRenderer  } from "electron";
 import * as net from "net";
 import { Buffer } from "buffer";
+import { KeyCode } from "./keyCode";
 
 let screenSocket: net.Socket | null = null;
 let inputSocket: net.Socket | null = null;
@@ -21,6 +22,12 @@ function setupSockets() {
   screenSocket.setNoDelay(true);
   inputSocket.setNoDelay(true);
 }
+
+contextBridge.exposeInMainWorld('keyboard', { 
+  getKeyCode: (winKeyCode: number) => {
+    return KeyCode.getKeyCode(winKeyCode);
+  }
+});
 
 contextBridge.exposeInMainWorld("MacBridge", {
   onStreamData: (callback: (chunk: Uint8Array) => void) => {

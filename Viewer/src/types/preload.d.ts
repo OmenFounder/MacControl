@@ -14,5 +14,8 @@ declare global {
         send: (channel: string, data: any) => void;
       };
     };
+    keyboard: {
+      getKeyCode (winKeyCode:number) : number;
+    };
   }
 }

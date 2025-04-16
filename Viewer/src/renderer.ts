@@ -1,3 +1,4 @@
+
 const canvas = document.getElementById("screen") as HTMLCanvasElement;
 const ctx = canvas.getContext("2d");
 
@@ -96,12 +97,32 @@ canvas.addEventListener("mouseup", (e) => {
 });
 
 window.addEventListener("keydown", (e) => {
-  window.MacBridge.sendInput([{ type: "keyDown", keyCode: e.keyCode }]);
+  const macKeyCode = window.keyboard.getKeyCode(e.keyCode);
+  if (macKeyCode !== undefined) {
+    window.MacBridge.sendInput({ type: "keyDown", keyCode: macKeyCode });
+  }
 });
 
 window.addEventListener("keyup", (e) => {
-  window.MacBridge.sendInput([{ type: "keyUp", keyCode: e.keyCode }]);
+  const macKeyCode = window.keyboard.getKeyCode(e.keyCode);
+  if (macKeyCode !== undefined) {
+    window.MacBridge.sendInput({ type: "keyUp", keyCode: macKeyCode });
+  }
 });
+
+canvas.addEventListener("wheel", (e) => {
+  e.preventDefault(); // Prevent native scrolling
+
+  const deltaX = e.deltaX;
+  const deltaY = e.deltaY;
+
+  window.MacBridge.sendInput({
+    type: "scroll",
+    deltaX,
+    deltaY,
+  });
+});
+
 
 window.addEventListener("resize", () => {
   resizeCanvasToMatchWindow();
