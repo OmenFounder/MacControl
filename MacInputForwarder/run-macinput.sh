@@ -1,6 +1,6 @@
 #!/bin/bash
 
-BINARY_PATH="/Users/jonathanday/Projects/MacControl/.build/debug/MacInputForwarder"
+BINARY_PATH="/Users/jonathanday/Projects/MacControl/MacInputForwarder/.build/debug/MacInputForwarder"
 USER_ID=$(id -u)
 USER_NAME=$(whoami)
 
