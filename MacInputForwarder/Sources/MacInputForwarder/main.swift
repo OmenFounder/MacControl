@@ -84,41 +84,6 @@ class InputReceiver {
         }
     }
 
-/*
-    private func listenLoop(socket: FileHandle) {
-        var buffer = Data()
-
-        while true {
-            do {
-                guard let chunk = try socket.read(upToCount: 1024), !chunk.isEmpty else {
-                    print("⚠️ Input socket closed.")
-                    break
-                }
-
-                buffer.append(chunk)
-
-                while let newline = buffer.firstIndex(of: 0x0A) {
-                    let jsonData = buffer[..<newline]
-                    buffer = buffer[(newline + 1)...]
-
-                    if let jsonArray = try? JSONSerialization.jsonObject(with: jsonData) as? [[String: Any]] {
-                        for dict in jsonArray {
-                            self.handleInput(dict)
-                        }
-                    } else if let dict = try? JSONSerialization.jsonObject(with: jsonData) as? [String: Any] {
-                        self.handleInput(dict)
-                    } else {
-                        print("⚠️ Invalid JSON")
-                    }
-                }
-            } catch {
-                print("❌ Read error: \(error)")
-                break
-            }
-        }
-    }
-    */
-
     private func listenLoop(socket: FileHandle) {
         var buffer = Data()
         let fd = socket.fileDescriptor
