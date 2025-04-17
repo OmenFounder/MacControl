@@ -3,7 +3,8 @@
 LABEL="com.macinput.forwarder"
 PLIST_PATH="$HOME/Library/LaunchAgents/$LABEL.plist"
 PROJECT_DIR="/Users/jonathanday/Projects/MacControl"
-BINARY_PATH="$PROJECT_DIR/MacInputForwarder/.build/debug/MacInputForwarder"
+BINARY_RELATIVE_PATH="MacInputForwarder/.build/debug/MacInputForwarder"
+BINARY_PATH="$PROJECT_DIR/$BINARY_RELATIVE_PATH"
 USER_ID=$(id -u)
 USER_NAME=$(whoami)
 
@@ -11,6 +12,13 @@ USER_NAME=$(whoami)
 echo "🔨 Building Swift project..."
 cd "$PROJECT_DIR/MacInputForwarder"
 swift build || { echo "❌ Build failed!"; exit 1; }
+
+# Commit the updated binary to Git
+echo "📦 Committing updated binary to Git..."
+cd "$PROJECT_DIR"
+git add "$BINARY_RELATIVE_PATH"
+git commit -m "🔧 Updated MacInputForwarder binary"
+git push || echo "⚠️ Push failed (maybe not on main or remote not set)"
 
 # Create LaunchAgent .plist if missing
 if [ ! -f "$PLIST_PATH" ]; then
