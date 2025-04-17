@@ -68,24 +68,23 @@ class InputReceiver {
 
     func start() {
         DispatchQueue.global(qos: .userInteractive).async {
-            while true {
-                do {
-                    let listener = try SocketListener(port: self.port)
-                    print("🎮 Input listener on port \(self.port)")
+            do {
+                let listener = try SocketListener(port: self.port)
+                print("🎮 Input listener on port \(self.port)")
 
-                    while true {
-                        let handle = listener.accept()
-                        print("✅ Input client connected")
-                        self.listenLoop(socket: handle)
-                    }
-                } catch {
-                    print("❌ Error in input receiver: \(error)")
-                    sleep(1)
+                while true {
+                    let handle = listener.accept()
+                    print("✅ Input client connected")
+                    self.listenLoop(socket: handle)
+                    print("⚠️ Client disconnected")
                 }
+            } catch {
+                print("❌ Input listener failed: \(error)")
             }
         }
     }
 
+/*
     private func listenLoop(socket: FileHandle) {
         var buffer = Data()
 
@@ -118,6 +117,49 @@ class InputReceiver {
             }
         }
     }
+    */
+
+    private func listenLoop(socket: FileHandle) {
+        var buffer = Data()
+        let fd = socket.fileDescriptor
+
+        // ✅ Make socket non-blocking
+        _ = fcntl(fd, F_SETFL, O_NONBLOCK)
+
+        var readBuffer = [UInt8](repeating: 0, count: 1024)
+
+        while true {
+            let bytesRead = Darwin.read(fd, &readBuffer, 1024)
+
+            if bytesRead > 0 {
+                buffer.append(contentsOf: readBuffer[0..<bytesRead])
+            } else if bytesRead == 0 {
+                print("⚠️ Input socket closed.")
+                break
+            } else if errno != EAGAIN && errno != EWOULDBLOCK {
+                print("❌ Read error: \(errno)")
+                break
+            }
+
+            // ✅ Process complete messages
+            while let newline = buffer.firstIndex(of: 0x0A) {
+                let jsonData = buffer[..<newline]
+                buffer = buffer[(newline + 1)...]
+
+                if let jsonArray = try? JSONSerialization.jsonObject(with: jsonData) as? [[String: Any]] {
+                    for dict in jsonArray {
+                        self.handleInput(dict)
+                    }
+                } else if let dict = try? JSONSerialization.jsonObject(with: jsonData) as? [String: Any] {
+                    self.handleInput(dict)
+                } else {
+                    print("⚠️ Invalid JSON")
+                }
+            }
+
+            usleep(1000) // 💡 Yield just a bit
+        }
+    }
 
     private func handleInput(_ dict: [String: Any]) {
         let x = dict["x"] as? CGFloat ?? 0
@@ -147,6 +189,7 @@ class InputReceiver {
 
         case "keyDown":
             if let keyCode = dict["keyCode"] as? UInt16 {
+                print("KeyCodeFound: \(keyCode)")
                 CGEvent(keyboardEventSource: nil, virtualKey: keyCode, keyDown: true)?.post(tap: .cghidEventTap)
             }
 
