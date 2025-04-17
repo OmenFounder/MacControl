@@ -99,6 +99,7 @@ canvas.addEventListener("mouseup", (e) => {
 window.addEventListener("keydown", (e) => {
   const macKeyCode = window.keyboard.getKeyCode(e.keyCode);
   if (macKeyCode !== undefined) {
+    console.log("Sending Mac Key Code: ", macKeyCode);
     window.MacBridge.sendInput({ type: "keyDown", keyCode: macKeyCode });
   }
 });
@@ -106,6 +107,7 @@ window.addEventListener("keydown", (e) => {
 window.addEventListener("keyup", (e) => {
   const macKeyCode = window.keyboard.getKeyCode(e.keyCode);
   if (macKeyCode !== undefined) {
+    console.log("Sending Mac Key Code: ", macKeyCode);
     window.MacBridge.sendInput({ type: "keyUp", keyCode: macKeyCode });
   }
 });
