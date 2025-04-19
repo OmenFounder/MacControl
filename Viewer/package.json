@@ -1,14 +1,45 @@
 {
   "name": "maccontrol",
   "version": "1.0.0",
+  "description": "Remote viewer for controlling a Mac from PC or another Mac",
+  "author": "O.M.E.N Foundation",
   "main": "dist/main.js",
   "scripts": {
     "build": "tsc -p tsconfig.main.json && tsc -p tsconfig.preload.json && tsc -p tsconfig.renderer.json && copyfiles -u 1 src/index.html dist",
-    "start": "electron ."
+    "start": "electron .",
+    "dist": "npm run build && electron-builder",
+    "dist:win": "npm run build && electron-builder --win",
+    "dist:mac": "npm run build && electron-builder --mac"
   },
   "devDependencies": {
     "copyfiles": "^2.4.1",
     "electron": "^27.1.2",
+    "electron-builder": "^26.0.12",
     "typescript": "^5.4.5"
+  },
+  "build": {
+    "appId": "com.omenfoundation.maccontrol",
+    "productName": "MacControl",
+    "files": [
+      "dist/**/*",
+      "node_modules/**/*",
+      "package.json"
+    ],
+    "directories": {
+      "output": "builds"
+    },
+    "protocols": [
+      {
+        "name": "MacControl Protocol",
+        "schemes": ["macviewer"]
+      }
+    ],
+    "mac": {
+      "target": ["dmg", "zip"],
+      "category": "public.app-category.utilities"
+    },
+    "win": {
+      "target": "nsis"
+    }
   }
 }

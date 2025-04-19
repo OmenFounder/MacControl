@@ -96,18 +96,37 @@ canvas.addEventListener("mouseup", (e) => {
   window.MacBridge.sendInput(events);
 });
 
+let escPressCount = 0;
+let lastEscTime = 0;
 window.addEventListener("keydown", (e) => {
   const macKeyCode = window.keyboard.getKeyCode(e.keyCode);
   if (macKeyCode !== undefined) {
-    console.log("Sending Mac Key Code: ", macKeyCode);
     window.MacBridge.sendInput({ type: "keyDown", keyCode: macKeyCode });
+  }
+
+  // ESC x3 detection logic
+  const now = performance.now();
+  if (e.key === "Escape") {
+    if (now - lastEscTime < 500) {
+      escPressCount++;
+      if (escPressCount === 3) {
+        console.warn("🧯 ESC x3 → Triggering modifier reset!");
+        window.MacBridge.sendInput({ type: "forceModifierReset" });
+        escPressCount = 0;
+      }
+    } else {
+      escPressCount = 1;
+    }
+    lastEscTime = now;
+  } else {
+    escPressCount = 0;
   }
 });
 
 window.addEventListener("keyup", (e) => {
   const macKeyCode = window.keyboard.getKeyCode(e.keyCode);
   if (macKeyCode !== undefined) {
-    console.log("Sending Mac Key Code: ", macKeyCode);
+    //console.log("Sending Mac Key Code: ", macKeyCode);
     window.MacBridge.sendInput({ type: "keyUp", keyCode: macKeyCode });
   }
 });
@@ -121,3 +140,9 @@ canvas.addEventListener("wheel", (e) => {
 window.addEventListener("resize", () => {
   resizeCanvasToMatchWindow();
 });
+
+window.electron.ipcRenderer.on("connect-to-ip", (_event, ip: string) => {
+  console.log("🌐 [Protocol] Received connect-to-ip:", ip);
+  window.MacBridge.connectTo(ip);
+});
+

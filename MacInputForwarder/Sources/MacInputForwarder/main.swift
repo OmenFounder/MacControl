@@ -211,12 +211,34 @@ class InputReceiver {
                 CGEvent(keyboardEventSource: nil, virtualKey: keyCode, keyDown: false)?.post(tap: .cghidEventTap)
             }
 
+        case "forceModifierReset":
+            resetAllModifiers()
 
 
         default:
             print("⚠️ Unknown input: \(dict)")
         }
     }
+
+    private func resetAllModifiers() {
+        let modifierKeyCodes: [UInt16] = [
+            54, // Right Command
+            55, // Left Command
+            56, // Left Shift
+            60, // Right Shift
+            58, // Left Option
+            61, // Right Option
+            59, // Left Control
+            62  // Right Control
+        ]
+
+        for keyCode in modifierKeyCodes {
+            CGEvent(keyboardEventSource: nil, virtualKey: keyCode, keyDown: false)?.post(tap: .cghidEventTap)
+        }
+
+        print("🧯 All modifier keys released.")
+    }
+
 }
 
 class SocketListener {
