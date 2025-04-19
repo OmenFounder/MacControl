@@ -4,6 +4,41 @@ import Darwin
 
 signal(SIGPIPE, SIG_IGN) // Prevent crashing on broken pipe
 
+
+let fileManager = FileManager.default
+
+// Resolve relative path to the built binary
+let launchDir = URL(fileURLWithPath: CommandLine.arguments[0]).deletingLastPathComponent()
+let watchedBinaryPath = launchDir
+    .appendingPathComponent("../../.build/debug/MacInputForwarder")
+    .standardized.path
+
+print("🕵️ Watching for changes to: \(watchedBinaryPath)")
+
+var lastModifiedTime: Date? = try? fileManager
+    .attributesOfItem(atPath: watchedBinaryPath)[.modificationDate] as? Date
+
+DispatchQueue.global(qos: .background).async {
+    while true {
+        sleep(1)
+
+        if let newTime = try? fileManager
+            .attributesOfItem(atPath: watchedBinaryPath)[.modificationDate] as? Date,
+           let oldTime = lastModifiedTime,
+           newTime > oldTime {
+
+            print("🔁 Detected updated build. Restarting from \(watchedBinaryPath)...")
+            lastModifiedTime = newTime
+
+            let task = Process()
+            task.executableURL = URL(fileURLWithPath: watchedBinaryPath)
+            try? task.run()
+            exit(0)
+        }
+    }
+}
+
+
 class ScreenStreamer {
     let port: UInt16 = 5051
 
