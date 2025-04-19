@@ -187,6 +187,19 @@ class InputReceiver {
         case "mouseRightUp":
             CGEvent(mouseEventSource: nil, mouseType: .rightMouseUp, mouseCursorPosition: pt, mouseButton: .right)?.post(tap: .cghidEventTap)
 
+        case "mouseScroll":
+                if let deltaY = dict["deltaY"] as? Int32 {
+                    let scrollEvent = CGEvent(
+                        scrollWheelEvent2Source: nil,
+                        units: .pixel,
+                        wheelCount: 1,
+                        wheel1: deltaY,
+                        wheel2: 0,
+                        wheel3: 0
+                    )
+                    scrollEvent?.post(tap: .cghidEventTap)
+                }
+
         case "keyDown":
             if let keyCode = dict["keyCode"] as? UInt16 {
                 print("KeyCodeFound: \(keyCode)")
@@ -197,6 +210,8 @@ class InputReceiver {
             if let keyCode = dict["keyCode"] as? UInt16 {
                 CGEvent(keyboardEventSource: nil, virtualKey: keyCode, keyDown: false)?.post(tap: .cghidEventTap)
             }
+
+
 
         default:
             print("⚠️ Unknown input: \(dict)")
