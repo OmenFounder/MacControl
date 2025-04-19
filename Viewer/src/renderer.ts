@@ -113,18 +113,10 @@ window.addEventListener("keyup", (e) => {
 });
 
 canvas.addEventListener("wheel", (e) => {
-  e.preventDefault(); // Prevent native scrolling
-
-  const deltaX = e.deltaX;
-  const deltaY = e.deltaY;
-
-  window.MacBridge.sendInput({
-    type: "scroll",
-    deltaX,
-    deltaY,
-  });
-});
-
+  e.preventDefault(); // prevent default scroll behavior
+  const deltaY = -Math.sign(e.deltaY) * Math.min(Math.abs(e.deltaY), 120); // ✅ Flip direction
+  window.MacBridge.sendInput({ type: "mouseScroll", deltaY });
+}, { passive: false });
 
 window.addEventListener("resize", () => {
   resizeCanvasToMatchWindow();
