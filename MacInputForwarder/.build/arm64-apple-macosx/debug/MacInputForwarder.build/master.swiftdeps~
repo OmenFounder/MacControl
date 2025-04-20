@@ -1,6 +1,0 @@
-version: "Apple Swift version 5.8.1 (swiftlang-5.8.0.124.5 clang-1403.0.22.11.100)"
-options: "c2f47a997a717d046340aeca7eab6b9fc62ad0e3368e10c823ab0565f769ff81"
-build_start_time: [1744642109, 398891000]
-build_end_time: [1744642113, 941436000]
-inputs:
-  "/Users/jonathanday/Projects/MacControl/MacInputForwarder/Sources/MacInputForwarder/main.swift": [1744641140, 365725756]
