@@ -137,3 +137,4 @@ dist
 
 /builds/
 /Viewer/builds
+.build/
